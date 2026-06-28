@@ -487,13 +487,6 @@ body::after {
         <div class="btn-text">Send magic packet</div>
       </span>
     </button>
-    <button class="power-btn sleep" onclick="doSleep()" id="sleep-btn">
-      <span class="btn-icon">🌙</span>
-      <span class="btn-main">
-        <div>Sleep PC</div>
-        <div class="btn-text">Remote hibernate</div>
-      </span>
-    </button>
   </div>
 
   <!-- ═══════════ SERVICES ═══════════ -->
@@ -584,14 +577,6 @@ async function doWake() {
   const data = await api('/api/wake', 'GET');
   btn.classList.remove('loading');
   showToast(data.success ? '⚡ Wake packet sent!' : '❌ ' + data.message, data.success);
-}
-
-async function doSleep() {
-  const btn = document.getElementById('sleep-btn');
-  btn.classList.add('loading');
-  const data = await api('/api/sleep', 'GET');
-  btn.classList.remove('loading');
-  showToast(data.success ? '🌙 Sleep command sent' : '❌ ' + data.message, data.success);
 }
 
 // ── Status Polling ────────────────────────────────────────
