@@ -564,11 +564,13 @@ function showToast(msg, success = true) {
   setTimeout(() => el.remove(), 3200);
 }
 
+const API_BASE = 'https://6819341f14ea.tail9f46bb.ts.net:8080';
+
 // ── API Helpers ───────────────────────────────────────────
 async function api(url, method = 'GET') {
   try {
     const opts = { method };
-    const r = await fetch(url, opts);
+    const r = await fetch(API_BASE + url, opts);
     return await r.json();
   } catch (e) {
     return { error: e.message };
