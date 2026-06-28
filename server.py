@@ -31,6 +31,7 @@ MAC          = config.get("MAC_ADDRESS", "18:C0:4D:CB:12:06")
 HOST         = config.get("HOST", "0.0.0.0")
 PORT         = config.get("PORT", 8080)
 WIN_HOST     = config.get("WINDOWS_HOST", "192.168.1.100")
+ROUTER_IP    = config.get("ROUTER_IP", "192.168.0.180")
 TAILSCALE_IP = config.get("TAILSCALE_IP", "")
 TAILSCALE_HN = config.get("TAILSCALE_HOSTNAME", "")
 
@@ -192,15 +193,22 @@ def ping_host(host, count=1, timeout=2):
 
 
 def send_wol(mac):
+    """Send WOL magic packet to the router (which has static ARP for the PC)."""
     try:
         cleaned = mac.replace(":", "").replace("-", "").replace(".", "").upper()
         mb = bytes.fromhex(cleaned)
         packet = b"\xff" * 6 + mb * 16
+
+        # Send directly to the router — it has a static ARP entry for the PC's MAC
+        target = ROUTER_IP or "192.168.0.180"
+
         import socket as s
         with s.socket(s.AF_INET, s.SOCK_DGRAM) as sock:
-            sock.setsockopt(s.SOL_SOCKET, s.SO_BROADCAST, 1)
-            sock.sendto(packet, ("255.255.255.255", 9))
-        return True, "WOL packet sent"
+            sock.settimeout(2)
+            sock.sendto(packet, (target, 9))
+            sock.sendto(packet, (target, 7))  # also try port 7
+
+        return True, f"WOL sent to router {target}:9"
     except Exception as e:
         return False, str(e)
 
