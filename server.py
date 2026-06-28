@@ -231,6 +231,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if p == "/api/status":    return self._status()
         if p == "/api/credits":   return self._credits()
         if p == "/api/config":    return self._config()
+        if p == "/api/wake":      return self._wake()
+        if p == "/api/sleep":     return self._sleep()
         if p in ("/", ""):        self.path = "/index.html"
         return super().do_GET()
 

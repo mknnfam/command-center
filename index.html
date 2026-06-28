@@ -579,7 +579,7 @@ async function api(url, method = 'GET') {
 async function doWake() {
   const btn = document.getElementById('wake-btn');
   btn.classList.add('loading');
-  const data = await api('/api/wake', 'POST');
+  const data = await api('/api/wake', 'GET');
   btn.classList.remove('loading');
   showToast(data.success ? '⚡ Wake packet sent!' : '❌ ' + data.message, data.success);
 }
@@ -587,7 +587,7 @@ async function doWake() {
 async function doSleep() {
   const btn = document.getElementById('sleep-btn');
   btn.classList.add('loading');
-  const data = await api('/api/sleep', 'POST');
+  const data = await api('/api/sleep', 'GET');
   btn.classList.remove('loading');
   showToast(data.success ? '🌙 Sleep command sent' : '❌ ' + data.message, data.success);
 }
