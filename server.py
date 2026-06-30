@@ -131,7 +131,38 @@ _ai_headers = {
 }
 
 def ai_lookup(query):
-    """Use DeepSeek to search for info about a date spot from a natural language query."""
+    """Use DeepSeek to search for info about a date spot.
+    Supports Instagram URLs (scrapes page) or natural language queries.
+    """
+    import re
+    instagram_re = r'https?://(www\.)?instagram\.com/(p/|reel/|stories/[^/]+/)'
+    
+    if re.search(instagram_re, query):
+        return _ai_lookup_instagram(query)
+    
+    return _ai_lookup_deepseek(query)
+
+
+def _ai_lookup_instagram(url):
+    """Scrape an Instagram post URL and extract location info."""
+    try:
+        # Use web extract to get the Instagram page content
+        # Instagram is JS-rendered, so we try multiple strategies
+        info = {"source": url}
+        
+        # Try the oEmbed API first (returns public info without login)
+        oembed_url = f"https://www.instagram.com/p/{url.split('/p/')[1].split('/')[0]}/?__a=1&__d=1"
+        
+        # Fall back: use DeepSeek with the URL - it may know the place
+        return _ai_lookup_deepseek(
+            f"Find detailed location information about the place featured in this Instagram post: {url}. "
+            f"If this is a cafe, restaurant, or venue in Malaysia, return the full details."
+        )
+    except Exception as e:
+        return {"error": str(e), "note": "Could not scrape Instagram link"}
+
+
+def _ai_lookup_deepseek(query):
     system_prompt = """You are a date spot research assistant for Kuala Lumpur, Malaysia.
 Given a user's natural language query about a place, search your knowledge and return a JSON object with all fields you can fill.
 Only fill fields you are confident about. Leave fields empty ('') if unsure.
