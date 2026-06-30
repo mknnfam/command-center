@@ -257,6 +257,27 @@ def try_sleep(host):
 
 _status_cache = {"awake": None, "ts": 0}
 
+# ── Rate Limiter (in-memory, per IP) ────────────────────────────
+import time as _time
+_RATE_LIMIT = {}          # ip -> list of timestamps
+_RATE_MAX   = 60           # max requests per window
+_RATE_WIN   = 60           # window in seconds
+
+
+def _check_rate_limit(ip):
+    """Returns True if request should be allowed, False if rate-limited."""
+    now = _time.time()
+    # Clean old entries
+    if ip in _RATE_LIMIT:
+        _RATE_LIMIT[ip] = [t for t in _RATE_LIMIT[ip] if t > now - _RATE_WIN]
+    else:
+        _RATE_LIMIT[ip] = []
+    # Check limit
+    if len(_RATE_LIMIT[ip]) >= _RATE_MAX:
+        return False
+    _RATE_LIMIT[ip].append(now)
+    return True
+
 
 # ── HTTP Handler ────────────────────────────────────────────
 
@@ -266,6 +287,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         super().__init__(*args, directory=DIR, **kwargs)
 
     def do_GET(self):
+        if not _check_rate_limit(self.client_address[0]):
+            return self._json({"error": "rate limited"}, 429)
         p = urllib.parse.urlparse(self.path).path
         if p == "/api/status":    return self._status()
         if p == "/api/credits":   return self._credits()
@@ -286,6 +309,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
+        if not _check_rate_limit(self.client_address[0]):
+            return self._json({"error": "rate limited"}, 429)
         p = urllib.parse.urlparse(self.path).path
         if p == "/api/wake":      return self._wake()
         if p == "/api/sleep":     return self._sleep()
